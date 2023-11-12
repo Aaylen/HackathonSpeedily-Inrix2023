@@ -113,12 +113,16 @@ return (
         left: `${mousePosition.x}px`,
         top: `${mousePosition.y}px`,
         backgroundColor: 'white',
-        padding: '10px',
+        padding: '10px', 
         borderRadius: '5px',
         transform: 'translate(-50%, -100%)',
         pointerEvents: 'none'
       }}>
-        Speed: {hoveredSpeed} mph
+        {hoveredSpeed >= 60 ?
+          `Speed: ${hoveredSpeed} mph, Speed Limit: 60` :
+          `Speed: ${hoveredSpeed} mph, Speed Limit: 25`
+        }
+
       </div>
     )}
   </div>
