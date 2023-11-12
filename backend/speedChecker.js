@@ -60,4 +60,30 @@ getToken().then(token => {
     });
 });
 
-// make a bubble sort 
+// Function to find the top 5 highest speed segments
+async function getTopSpeedSegments() {
+    try {
+      const token = await getToken();
+      const speedData = await getSpeed(token);
+  
+      const segments = speedData.result.segmentspeeds[0].segments; // Adjust according to the actual response structure
+  
+      const topSpeedSegments = segments
+        .sort((a, b) => b.speed - a.speed) // Sort segments by speed in descending order
+        .slice(0, 5); // Get the top 5 segments
+  
+      return topSpeedSegments;
+    } catch (error) {
+      console.error('Error:', error);
+      throw error; // Rethrow to handle in caller function
+    }
+  }
+  
+  // Example usage
+  getTopSpeedSegments().then(topSegments => {
+    console.log('Top 5 High Speed Segments:', JSON.stringify(topSegments));
+  }).catch(error => {
+    console.error('An error occurred:', error);
+  });
+  
+  module.exports = { getTopSpeedSegments };
