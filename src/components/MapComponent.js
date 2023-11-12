@@ -1,80 +1,138 @@
-import React, { useEffect } from 'react';
-import geojsonData from '../../data/USA_CA_BayArea.json';
+import React, { useState, useEffect, useCallback } from 'react';
+import geojsonData from '../../src/data/USA_CA_BayArea.json';
+import { getTopSpeedSegments } from '../../src/components/speedChecker.js';
+import './MapComponent.css';
+
 
 const MapComponent = () => {
-  const drawLines = (path, map) => {
-    const linePath = new window.google.maps.Polyline({
-      path: path,
-      geodesic: true,
-      strokeColor: 'black',
-      strokeOpacity: 1.0,
-      strokeWeight: 2,
-    });
-  
-    linePath.setMap(map);
-  };
-  
+const [speedData, setSpeedData] = useState({ codes: [], speeds: [] });
+const [hoveredSpeed, setHoveredSpeed] = useState(null); // State to store the speed of the hovered line
+const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 }); // State to store the mouse position
 
-  useEffect(() => {
-    const parseGeoJson = (geojsonData, map) => {
-      geojsonData.features.forEach((feature) => {
-        
-        const { type } = feature.geometry;
-        const coordinates = feature.geometry.coordinates;
-    
-        // Check if the feature is a LineString
+
+useEffect(() => {
+  getTopSpeedSegments()
+    .then(segments => {
+      const codes = segments.map(segment => segment.code);
+      const speeds = segments.map(segment => segment.speed);
+      setSpeedData({ codes, speeds });
+    })
+    .catch(error => {
+      console.error('Failed to load top speed segments:', error);
+    });
+}, []);
+
+
+const drawLines = useCallback((path, map, speed) => {
+  let color;
+  if (speed >= 60) {
+    color = getColorForSpeed(speed, 75, 60);
+  } else {
+    color = getColorForSpeed(speed, 40, 25);
+  }
+
+
+  const linePath = new window.google.maps.Polyline({
+    path: path,
+    geodesic: true,
+    strokeColor: color,
+    strokeOpacity: 1.0,
+    strokeWeight: 4,
+  });
+
+
+  linePath.setMap(map);
+
+
+  linePath.addListener('mouseover', (e) => {
+    setHoveredSpeed(speed);
+    setMousePosition({ x: e.domEvent.clientX, y: e.domEvent.clientY });
+  });
+
+
+  linePath.addListener('mouseout', () => {
+    setHoveredSpeed(null);
+  });
+}, []);
+
+
+useEffect(() => {
+  const parseGeoJson = (geojsonData, map) => {
+    geojsonData.features.forEach((feature) => {
+      const ID = feature.properties.XDSegID;
+      const { type } = feature.geometry;
+      const coordinates = feature.geometry.coordinates;
+
+
+      if (speedData.codes.includes(ID)) {
         if (type === 'LineString') {
-          // Map the GeoJSON coordinates to the format expected by Google Maps
           const googleMapsCoordinates = coordinates.map(([lng, lat]) => ({
             lat,
             lng,
           }));
-
-          console.log(googleMapsCoordinates);
-    
-          // Draw the line on the map
-          drawLines(googleMapsCoordinates, map);
+          const index = speedData.codes.indexOf(ID);
+          const speed = speedData.speeds[index];
+          drawLines(googleMapsCoordinates, map, speed);
         }
-        // If you have MultiLineString or other types, handle them similarly
-      });
-    };
-    
-    // const drawRoadSegment = (coordinates, map) => {
-    //   // Convert GeoJSON coordinates to Google Maps format
-    //   const path = coordinates.map(([lng, lat]) => ({ lat, lng }));
-    
-    //   // Draw the line on the map using your existing function
-    //   drawLines(path, map);
-    // };
+      }
+    });
+  };
 
-    const script = document.createElement('script');
-    script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBo8St_ilzkUBYZLR6BKYYyPqX6KxyBrtc&callback=initMap";
-    script.async = true;
 
-    window.initMap = () => {
-      const map = new window.google.maps.Map(document.getElementById('map'), {
-        center: { lat: 37.4220656, lng: -122.0840897 },
-        zoom: 10,
-        mapId: 'DEMO_MAP_ID'
-      });
+  const script = document.createElement('script');
+  script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyB16gWW5AYW-zjCK3Z4ZCGI8SFaVEWxSQY&callback=initMap";
+  script.async = true;
 
-      const testPath = [
-        { lat: 37.7749, lng: -122.4194 }, // Start at a recognizable location
-        { lat: 37.7899, lng: -122.4020 }, // End at another recognizable location
-      ];
 
-      // Call drawLines with the test coordinates
-      drawLines(testPath, map);
-      //drawLines(37.666403, -122.425969, 37.676978, -122.147290, map);
-      parseGeoJson(geojsonData, map);
-     
-      console.log("path");
-    };
+  window.initMap = () => {
+    const map = new window.google.maps.Map(document.getElementById('map'), {
+      center: { lat: 37.759590, lng: -122.442382 },
+      zoom: 13,
+      mapId: 'DEMO_MAP_ID'
+    });
+    parseGeoJson(geojsonData, map);
+  };
 
-    document.head.appendChild(script);
-  }, []);
- 
-  return <div id="map" />;
+
+  document.head.appendChild(script);
+
+
+  return () => {
+    document.head.removeChild(script);
+    window.initMap = undefined;
+  };
+}, [drawLines, speedData.codes, speedData.speeds]);
+
+
+return (
+  <div>
+    <div id="map" style={{ height: '-100%px', width: '100%' }} />
+    {hoveredSpeed !== null && (
+      <div style={{
+        position: 'fixed',
+        left: `${mousePosition.x}px`,
+        top: `${mousePosition.y}px`,
+        backgroundColor: 'white',
+        padding: '10px',
+        borderRadius: '5px',
+        transform: 'translate(-50%, -100%)',
+        pointerEvents: 'none'
+      }}>
+        Speed: {hoveredSpeed} mph
+      </div>
+    )}
+  </div>
+);
 };
 
+
 export default MapComponent;
+
+
+function getColorForSpeed(value, maxVal, minVal) {
+const ratio = Math.min((Math.max(value, minVal) - minVal) / (maxVal - minVal), 1);
+const red = Math.floor(ratio * 255);
+const green = Math.floor((1 - ratio) * 255);
+const blue = 0;
+return `rgb(${red},${green},${blue})`;
+}
