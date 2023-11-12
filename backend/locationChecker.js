@@ -1,7 +1,11 @@
 // anotherFile.js
 
 const { getTopSpeedSegments } = require('./speedData');
+<<<<<<< Updated upstream
 fetch('path/to/your/data.json')
+=======
+fetch('C:\Users\theog\OneDrive\Desktop\Coding projects\USA_CA_BayArea_geojson (2)')
+>>>>>>> Stashed changes
   .then(response => response.json())
   .then(data => {
     // Work with your data here
@@ -9,24 +13,12 @@ fetch('path/to/your/data.json')
   })
   .catch(error => console.error(error));
   
-  getTopSpeedSegments[0].code     
-
-// Define the coordinates you want to check against
-const targetCoordinates = [
-  { lat: 38.29852, long: -122.28496 },
-  // ... more coordinates if needed ...
-];
-
-function checkSegmentMatchesCoordinates(segment, targetCoords) {
-  return targetCoords.some(coord => 
-    (coord.lat === parseFloat(segment.properties.StartLat) && coord.long === parseFloat(segment.properties.StartLong)) ||
-    (coord.lat === parseFloat(segment.properties.EndLat) && coord.long === parseFloat(segment.properties.EndLong))
-  );
+  for(i =0; i < 5; i++){
+    for(w = 0; w < data.length; w++)
+    {
+        if(getTopSpeedSegments[i].code == data[w].properties.code)
+        {
+            console.log(getTopSpeedSegments[i].code);
+        }
+    }
 }
-
-function findMatchingSegments(segments, targetCoords) {
-  return segments.filter(segment => checkSegmentMatchesCoordinates(segment, targetCoords));
-}
-
-const matchingSegments = findMatchingSegments(topSpeedSegments, targetCoordinates);
-console.log('Matching Segments:', matchingSegments);

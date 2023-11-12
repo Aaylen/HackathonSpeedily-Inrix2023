@@ -60,6 +60,7 @@ getToken().then(token => {
     });
 });
 
+<<<<<<< Updated upstream
 // Function to find the top 5 highest speed segments
 async function getTopSpeedSegments() {
     try {
@@ -87,3 +88,6 @@ async function getTopSpeedSegments() {
   });
   
   module.exports = { getTopSpeedSegments };
+=======
+module.exports = { getTopSpeedSegments };
+>>>>>>> Stashed changes
