@@ -1,10 +1,11 @@
 import React from 'react';
 import './style.css';
-import MapComponent from './components/MapComponent';
+import MapComponent from './components/MapComponent/MapComponent';
 
 function App() {
   return (
     <div>
+      
       <MapComponent />
     </div>
   );
